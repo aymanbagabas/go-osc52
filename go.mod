@@ -1,3 +1,3 @@
-module github.com/aymanbagabas/osc52
+module github.com/aymanbagabas/go-osc52
 
 go 1.18
