@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"strings"
 )
@@ -63,7 +62,6 @@ func (o *Output) Copy(str string) {
 	case strings.HasPrefix(term, "kitty"):
 		mode = "kitty"
 	}
-	log.Printf("mode: %s", mode)
 
 	switch mode {
 	case "default":
