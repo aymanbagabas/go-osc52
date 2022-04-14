@@ -2,15 +2,20 @@ package osc52
 
 import (
 	"encoding/base64"
+	"fmt"
 	"io"
+	"log"
 	"os"
 	"strings"
 )
 
+// output is the default output for Copy which uses os.Stdout and os.Environ.
 var output = NewOutput(os.Stdout, os.Environ())
 
+// envs is a map of environment variables.
 type envs map[string]string
 
+// Get returns the value of the environment variable named by the key.
 func (e envs) Get(key string) string {
 	v, ok := e[key]
 	if !ok {
@@ -19,11 +24,13 @@ func (e envs) Get(key string) string {
 	return v
 }
 
+// Output is where the OSC52 string should be written.
 type Output struct {
 	out  io.Writer
 	envs envs
 }
 
+// NewOutput returns a new Output.
 func NewOutput(out io.Writer, envs []string) *Output {
 	e := make(map[string]string, 0)
 	for _, env := range envs {
@@ -39,22 +46,24 @@ func NewOutput(out io.Writer, envs []string) *Output {
 	return o
 }
 
+// Copy copies the OSC52 string to the output. This is the default copy function.
 func Copy(str string) {
 	output.Copy(str)
 }
 
+// Copy copies the OSC52 string to the output.
 func (o *Output) Copy(str string) {
 	mode := "default"
 	term := o.envs.Get("TERM")
-	lcterm := o.envs.Get("LC_TERM")
 	switch {
 	case o.envs.Get("TMUX") != "":
 		mode = "tmux"
-	case strings.HasPrefix(term, "screen"), strings.HasPrefix(lcterm, "screen"):
+	case strings.HasPrefix(term, "screen"):
 		mode = "screen"
-	case strings.HasPrefix(term, "kitty"), strings.HasPrefix(lcterm, "kitty"):
+	case strings.HasPrefix(term, "kitty"):
 		mode = "kitty"
 	}
+	log.Printf("mode: %s", mode)
 
 	switch mode {
 	case "default":
@@ -68,44 +77,35 @@ func (o *Output) Copy(str string) {
 	}
 }
 
+// copyDefault copies the OSC52 string to the output.
 func (o *Output) copyDefault(str string) {
 	b64 := base64.StdEncoding.EncodeToString([]byte(str))
 	o.out.Write([]byte("\x1b]52;c;" + b64 + "\x07"))
 }
 
+// copyTmux copies the OSC52 string escaped for Tmux.
 func (o *Output) copyTmux(str string) {
 	b64 := base64.StdEncoding.EncodeToString([]byte(str))
 	o.out.Write([]byte("\x1bPtmux;\x1b\x1b]52;c;" + b64 + "\x07\x1b\\"))
 }
 
+// copyDCS copies the OSC52 string wrapped in a DCS sequence which is
+// appropriate when using screen.
+//
+// Screen doesn't support OSC52 but will pass the contents of a DCS sequence to
+// the outer terminal unchanged.
 func (o *Output) copyDCS(str string) {
-	// " This function base64's the entire source, wraps it in a single OSC52, and then
-	// " breaks the result into small chunks which are each wrapped in a DCS sequence.
-	// " This is appropriate when running on `screen`. Screen doesn't support OSC52,
-	// " but will pass the contents of a DCS sequence to the outer terminal unchanged.
-	// " It imposes a small max length to DCS sequences, so we send in chunks.
-	// let b64 = s:b64encode(a:str, 76)
-	// " Remove the trailing newline.
-	// let b64 = substitute(b64, '\n*$', '', '')
-	// " Replace each newline with an <end-dcs><start-dcs> pair.
-	// let b64 = substitute(b64, '\n', "\e/\eP", "g")
-	// " (except end-of-dcs is "ESC \", begin is "ESC P", and I can't figure out
-	// " how to express "ESC \ ESC P" in a single string. So the first substitute
-	// " uses "ESC / ESC P" and the second one swaps out the "/". It seems like
-	// " there should be a better way.)
-	// let b64 = substitute(b64, '/', '\', 'g')
-	// " Now wrap the whole thing in <start-dcs><start-osc52>...<end-osc52><end-dcs>.
-	// return "\eP\e]52;c;" . b64 . "\x07\e\x5c"
+	// Here, we split the encoded string into 76 bytes chunks and then join the
+	// chunks with <end-dsc><start-dsc> sequences. Finally, wrap the whole thing in
+	// <start-dsc><start-osc52><joined-chunks><end-osc52><end-dsc>.
 	b64 := base64.StdEncoding.EncodeToString([]byte(str))
-	s := strings.SplitN(b64, "\n", 76)
-	q := "\x1bP\x1b]52;c;"
-	for _, v := range s {
-		q += "\x1b\\\x1bP" + v
-	}
-	q += "\x07\x1b\x5c"
+	s := strings.SplitN(b64, "", 76)
+	q := fmt.Sprintf("\x1bP\x1b]52;c;%s\x07\x1b\x5c", strings.Join(s, "\x1b\\\x1bP"))
 	o.out.Write([]byte(q))
 }
 
+// copyKitty copies the OSC52 string to Kitty. First, it flushes the keyboard
+// before copying, this is required for Kitty < 0.22.0.
 func (o *Output) copyKitty(str string) {
 	o.out.Write([]byte("\x1b]52;c;!\x07"))
 	o.copyDefault(str)
