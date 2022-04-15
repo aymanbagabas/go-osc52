@@ -55,7 +55,7 @@ func (o *Output) Copy(str string) {
 	mode := "default"
 	term := o.envs.Get("TERM")
 	switch {
-	case o.envs.Get("TMUX") != "":
+	case o.envs.Get("TMUX") != "", strings.HasPrefix(term, "tmux"):
 		mode = "tmux"
 	case strings.HasPrefix(term, "screen"):
 		mode = "screen"
