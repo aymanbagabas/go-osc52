@@ -59,7 +59,7 @@ func (o *Output) Copy(str string) {
 		mode = "tmux"
 	case strings.HasPrefix(term, "screen"):
 		mode = "screen"
-	case strings.HasPrefix(term, "kitty"):
+	case strings.Contains(term, "kitty"):
 		mode = "kitty"
 	}
 
