@@ -52,26 +52,16 @@ func Copy(str string) {
 
 // Copy copies the OSC52 string to the output.
 func (o *Output) Copy(str string) {
-	mode := "default"
-	term := o.envs.Get("TERM")
+	term := strings.ToLower(o.envs.Get("TERM"))
 	switch {
 	case o.envs.Get("TMUX") != "", strings.HasPrefix(term, "tmux"):
-		mode = "tmux"
-	case strings.HasPrefix(term, "screen"):
-		mode = "screen"
-	case strings.Contains(term, "kitty"):
-		mode = "kitty"
-	}
-
-	switch mode {
-	case "default":
-		o.copyDefault(str)
-	case "tmux":
 		o.copyTmux(str)
-	case "screen":
+	case strings.HasPrefix(term, "screen"):
 		o.copyDCS(str)
-	case "kitty":
+	case strings.Contains(term, "kitty"):
 		o.copyKitty(str)
+	default:
+		o.copyDefault(str)
 	}
 }
 
