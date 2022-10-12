@@ -124,19 +124,18 @@ func (o *Output) CopyClipboard(str string, c Clipboard) {
 func (o *Output) osc52Write(str string, c Clipboard) {
 	var seq string
 	term := strings.ToLower(o.envs.Get("TERM"))
-	b64 := base64.StdEncoding.EncodeToString([]byte(str))
 	switch {
 	case o.envs.Get("TMUX") != "", strings.HasPrefix(term, "tmux"):
-		seq = Sequence(b64, "tmux", c)
+		seq = Sequence(str, "tmux", c)
 	case strings.HasPrefix(term, "screen"):
-		seq = Sequence(b64, "screen", c)
+		seq = Sequence(str, "screen", c)
 	case strings.Contains(term, "kitty"):
 		// First, we flush the keyboard before copying, this is required for
 		// Kitty < 0.22.0.
 		o.out.Write([]byte(Clear(term, c)))
-		seq = Sequence(b64, "kitty", c)
+		seq = Sequence(str, "kitty", c)
 	default:
-		seq = Sequence(b64, term, c)
+		seq = Sequence(str, term, c)
 	}
 	o.out.Write([]byte(seq))
 }
@@ -171,9 +170,9 @@ func seqEnd(term string) string {
 	return seq.String()
 }
 
-// Sequence returns the OSC52 sequence for the given string, terminal, and clipboard choice.
+// sequence returns the OSC52 sequence for the passed content.
 // Beware that the string here is not base64 encoded.
-func Sequence(contents string, term string, c Clipboard) string {
+func sequence(contents string, term string, c Clipboard) string {
 	var seq strings.Builder
 	term = strings.ToLower(term)
 	seq.WriteString(seqStart(term, c))
@@ -190,6 +189,21 @@ func Sequence(contents string, term string, c Clipboard) string {
 	default:
 		seq.WriteString(contents)
 	}
+	seq.WriteString(seqEnd(term))
+	return seq.String()
+}
+
+// Sequence returns the OSC52 sequence for the given string, terminal, and clipboard choice.
+func Sequence(str string, term string, c Clipboard) string {
+	b64 := base64.StdEncoding.EncodeToString([]byte(str))
+	return sequence(b64, term, c)
+}
+
+// Contents returns the contents of the clipboard.
+func Contents(term string, c Clipboard) string {
+	var seq strings.Builder
+	seq.WriteString(seqStart(term, c))
+	seq.WriteString("?")
 	seq.WriteString(seqEnd(term))
 	return seq.String()
 }
