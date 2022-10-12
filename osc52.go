@@ -9,7 +9,7 @@ import (
 )
 
 // output is the default output for Copy which uses os.Stdout and os.Environ.
-var output = NewOutput(os.Stdout, os.Environ())
+var output = NewOutput(os.Stderr, os.Environ())
 
 // envs is a map of environment variables.
 type envs map[string]string
