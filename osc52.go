@@ -172,6 +172,7 @@ func seqEnd(term string) string {
 }
 
 // Sequence returns the OSC52 sequence for the given string, terminal, and clipboard choice.
+// Beware that the string here is not base64 encoded.
 func Sequence(contents string, term string, c Clipboard) string {
 	var seq strings.Builder
 	term = strings.ToLower(term)
