@@ -36,16 +36,16 @@ import (
 type Clipboard uint
 
 const (
-	// ClipboardC is the clipboard buffer.
-	ClipboardC Clipboard = iota
-	// ClipboardP is the primary clipboard buffer.
-	ClipboardP
+	// SystemClipboard is the system clipboard buffer.
+	SystemClipboard Clipboard = iota
+	// PrimaryClipboard is the primary clipboard buffer (X11).
+	PrimaryClipboard
 )
 
 // String implements the fmt.Stringer interface for [Clipboard].
 func (c Clipboard) String() string {
 	return []string{
-		"c", "p", "q", "s", "0", "1", "2", "3", "4", "5", "6", "7",
+		"c", "p",
 	}[c]
 }
 
@@ -98,7 +98,7 @@ func Copy(str string) {
 
 // Copy copies the OSC52 string to the output. This uses the system clipboard buffer.
 func (o *Output) Copy(str string) {
-	o.CopyClipboard(str, ClipboardC)
+	o.CopyClipboard(str, SystemClipboard)
 }
 
 // CopyPrimary copies the OSC52 string to the output. This uses the primary clipboard buffer.
@@ -108,7 +108,7 @@ func CopyPrimary(str string) {
 
 // CopyPrimary copies the OSC52 string to the output. This uses the primary clipboard buffer.
 func (o *Output) CopyPrimary(str string) {
-	o.CopyClipboard(str, ClipboardP)
+	o.CopyClipboard(str, PrimaryClipboard)
 }
 
 // CopyClipboard copies the OSC52 string to the output. This uses the passed clipboard buffer.
