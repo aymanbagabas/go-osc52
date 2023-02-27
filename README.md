@@ -8,12 +8,43 @@
 
 A Go library to work with the [ANSI OSC52](https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h3-Operating-System-Commands) terminal sequence.
 
-## Example
+## Usage
+
+You can use this small library to construct an ANSI OSC52 sequence suitable for
+your terminal.
+
+
+### Example
 
 ```go
-str := "Hello World!"
-osc52.Copy(str) // Copies str to system clipboard
-osc52.CopyPrimary(str) // Copies str to primary clipboard (X11 only)
+import (
+  "os"
+  "fmt"
+
+  "github.com/aymanbagabas/go-osc52"
+)
+
+func main() {
+  s := "Hello World!"
+
+  // Copy `s` to system clipboard
+  osc52.New(s).WriteTo(os.Stderr)
+
+  // Copy `s` to primary clipboard (X11)
+  osc52.New(s).Primary().WriteTo(os.Stderr)
+
+  // Query the clipboard
+  osc52.Query().WriteTo(os.Stderr)
+
+  // Clear system clipboard
+  osc52.Clear().WriteTo(os.Stderr)
+
+  // Use the fmt.Stringer interface to copy `s` to system clipboard
+  fmt.Fprint(os.Stderr, osc52.New(s))
+
+  // Or to primary clipboard
+  fmt.Fprint(os.Stderr, osc52.New(s).Primary())
+}
 ```
 
 ## SSH Example
@@ -21,42 +52,31 @@ osc52.CopyPrimary(str) // Copies str to primary clipboard (X11 only)
 You can use this over SSH using [gliderlabs/ssh](https://github.com/gliderlabs/ssh) for instance:
 
 ```go
-envs := sshSession.Environ()
+var sshSession ssh.Session
+seq := osc52.New("Hello awesome!")
+// Check if term is screen or tmux
 pty, _, _ := s.Pty()
-envs = append(envs, "TERM="+pty.Term)
-output := NewOutput(sshSession, envs)
-// Copy text in your application
-output.Copy("Hello awesome!")
+if pty.Term == "screen" {
+  seq = seq.Screen()
+} else if isTmux {
+  seq = seq.Tmux()
+}
+seq.WriteTo(sshSession.Stderr())
 ```
 
-If you're using tmux, you could pass the `TMUX` environment variable to help detect tmux:
+## Tmux
 
-```sh
-ssh -o SendEnv=TMUX <host>
-```
+Make sure you have `set-clipboard on` in your config, otherwise, tmux won't
+allow your application to access the clipboard [^1].
 
-### Tmux users
+Using the tmux option, `osc52.TmuxMode` or `osc52.New(...).Tmux()`, wraps the
+OSC52 sequence in a special tmux DCS sequence and pass it to the outer
+terminal. This requires `allow-passthrough on` in your config.
+`allow-passthrough` is no longer enabled by default
+[since tmux 2.4](https://github.com/tmux/tmux/issues/3218#issuecomment-1153089282) [^2].
 
-If you're using tmux, make sure you set `set -g default-terminal` in your tmux
-config, to a value that starts with `tmux-`. `tmux-256color` for instance. See
-[this](https://github.com/tmux/tmux/wiki/FAQ#why-do-you-use-the-screen-terminal-description-inside-tmux)
-for more details.
-
-`go-osc52` will wrap the OSC52 sequence in a `tmux` escape sequence if tmux is
-detected. If you're running tmux >= 3.3, OSC52 won't work and you'll need to set
-the `set -g allow-passthrough on` in your tmux config.
-
-```tmux
-set -g allow-passthrough on
-```
-
-or set `set -g set-clipboard on` in your tmux config and use your outer terminal in your code instead:
-
-```go
-// Assuming this code is running in tmux >= 3.3 in kitty
-seq := osc52.Sequence("Hello awesome!", "xterm-kitty", osc52.ClipboardC)
-os.Stderr.WriteString(seq)
-```
+[^1]: See [tmux clipboard](https://github.com/tmux/tmux/wiki/Clipboard)
+[^2]: [What is allow-passthrough](https://github.com/tmux/tmux/wiki/FAQ#what-is-the-passthrough-escape-sequence-and-how-do-i-use-it)
 
 ## Credits
 
