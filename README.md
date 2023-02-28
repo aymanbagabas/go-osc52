@@ -73,7 +73,7 @@ Using the tmux option, `osc52.TmuxMode` or `osc52.New(...).Tmux()`, wraps the
 OSC52 sequence in a special tmux DCS sequence and pass it to the outer
 terminal. This requires `allow-passthrough on` in your config.
 `allow-passthrough` is no longer enabled by default
-[since tmux 2.4](https://github.com/tmux/tmux/issues/3218#issuecomment-1153089282) [^2].
+[since tmux 3.3a](https://github.com/tmux/tmux/issues/3218#issuecomment-1153089282) [^2].
 
 [^1]: See [tmux clipboard](https://github.com/tmux/tmux/wiki/Clipboard)
 [^2]: [What is allow-passthrough](https://github.com/tmux/tmux/wiki/FAQ#what-is-the-passthrough-escape-sequence-and-how-do-i-use-it)
