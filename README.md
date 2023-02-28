@@ -21,7 +21,7 @@ import (
   "os"
   "fmt"
 
-  "github.com/aymanbagabas/go-osc52"
+  "github.com/aymanbagabas/go-osc52/v2"
 )
 
 func main() {
