@@ -82,9 +82,9 @@ func TestCopy(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			s := New(c.str)
-			s.Clipboard(c.clipboard)
-			s.Mode(c.mode)
-			s.Limit(c.limit)
+			s = s.Clipboard(c.clipboard)
+			s = s.Mode(c.mode)
+			s = s.Limit(c.limit)
 			if s.String() != c.expected {
 				t.Errorf("expected %q, got %q", c.expected, s.String())
 			}

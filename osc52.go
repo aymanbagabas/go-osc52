@@ -104,12 +104,12 @@ type Sequence struct {
 	clipboard Clipboard
 }
 
-var _ fmt.Stringer = (*Sequence)(nil)
+var _ fmt.Stringer = Sequence{}
 
-var _ io.WriterTo = (*Sequence)(nil)
+var _ io.WriterTo = Sequence{}
 
 // String returns the OSC52 sequence.
-func (s *Sequence) String() string {
+func (s Sequence) String() string {
 	var seq strings.Builder
 	// mode escape sequences start
 	seq.WriteString(s.seqStart())
@@ -160,13 +160,13 @@ func (s *Sequence) String() string {
 }
 
 // WriteTo writes the OSC52 sequence to the writer.
-func (s *Sequence) WriteTo(out io.Writer) (int64, error) {
+func (s Sequence) WriteTo(out io.Writer) (int64, error) {
 	n, err := out.Write([]byte(s.String()))
 	return int64(n), err
 }
 
 // Mode sets the mode for the OSC52 sequence.
-func (s *Sequence) Mode(m Mode) *Sequence {
+func (s Sequence) Mode(m Mode) Sequence {
 	s.mode = m
 	return s
 }
@@ -178,7 +178,7 @@ func (s *Sequence) Mode(m Mode) *Sequence {
 // TmuxMode is used, tmux must have `allow-passthrough on` set.
 //
 // This is a syntactic sugar for s.Mode(TmuxMode).
-func (s *Sequence) Tmux() *Sequence {
+func (s Sequence) Tmux() Sequence {
 	return s.Mode(TmuxMode)
 }
 
@@ -186,12 +186,12 @@ func (s *Sequence) Tmux() *Sequence {
 // Used to escape the OSC52 sequence for `screen`.
 //
 // This is a syntactic sugar for s.Mode(ScreenMode).
-func (s *Sequence) Screen() *Sequence {
+func (s Sequence) Screen() Sequence {
 	return s.Mode(ScreenMode)
 }
 
 // Clipboard sets the clipboard buffer for the OSC52 sequence.
-func (s *Sequence) Clipboard(c Clipboard) *Sequence {
+func (s Sequence) Clipboard(c Clipboard) Sequence {
 	s.clipboard = c
 	return s
 }
@@ -200,7 +200,7 @@ func (s *Sequence) Clipboard(c Clipboard) *Sequence {
 // This is the X11 primary clipboard.
 //
 // This is a syntactic sugar for s.Clipboard(PrimaryClipboard).
-func (s *Sequence) Primary() *Sequence {
+func (s Sequence) Primary() Sequence {
 	return s.Clipboard(PrimaryClipboard)
 }
 
@@ -210,7 +210,7 @@ func (s *Sequence) Primary() *Sequence {
 // Strings longer than the limit get ignored. Settting the limit to 0 or a
 // negative value disables the limit. Each terminal defines its own escapse
 // sequence limit.
-func (s *Sequence) Limit(l int) *Sequence {
+func (s Sequence) Limit(l int) Sequence {
 	if l < 0 {
 		s.limit = 0
 	} else {
@@ -221,7 +221,7 @@ func (s *Sequence) Limit(l int) *Sequence {
 
 // Operation sets the operation for the OSC52 sequence.
 // The default operation is SetOperation.
-func (s *Sequence) Operation(o Operation) *Sequence {
+func (s Sequence) Operation(o Operation) Sequence {
 	s.op = o
 	return s
 }
@@ -230,7 +230,7 @@ func (s *Sequence) Operation(o Operation) *Sequence {
 // This clears the clipboard.
 //
 // This is a syntactic sugar for s.Operation(ClearOperation).
-func (s *Sequence) Clear() *Sequence {
+func (s Sequence) Clear() Sequence {
 	return s.Operation(ClearOperation)
 }
 
@@ -238,21 +238,21 @@ func (s *Sequence) Clear() *Sequence {
 // This queries the clipboard contents.
 //
 // This is a syntactic sugar for s.Operation(QueryOperation).
-func (s *Sequence) Query() *Sequence {
+func (s Sequence) Query() Sequence {
 	return s.Operation(QueryOperation)
 }
 
 // SetString sets the string for the OSC52 sequence. Strings are joined with a
 // space character.
-func (s *Sequence) SetString(strs ...string) *Sequence {
+func (s Sequence) SetString(strs ...string) Sequence {
 	s.str = strings.Join(strs, " ")
 	return s
 }
 
 // New creates a new OSC52 sequence with the given string(s). Strings are
 // joined with a space character.
-func New(strs ...string) *Sequence {
-	s := &Sequence{
+func New(strs ...string) Sequence {
+	s := Sequence{
 		str:       strings.Join(strs, " "),
 		limit:     0,
 		mode:      DefaultMode,
@@ -266,7 +266,7 @@ func New(strs ...string) *Sequence {
 // This returns a new OSC52 sequence to query the clipboard contents.
 //
 // This is a syntactic sugar for New().Query().
-func Query() *Sequence {
+func Query() Sequence {
 	return New().Query()
 }
 
@@ -274,11 +274,11 @@ func Query() *Sequence {
 // This returns a new OSC52 sequence to clear the clipboard.
 //
 // This is a syntactic sugar for New().Clear().
-func Clear() *Sequence {
+func Clear() Sequence {
 	return New().Clear()
 }
 
-func (s *Sequence) seqStart() string {
+func (s Sequence) seqStart() string {
 	switch s.mode {
 	case TmuxMode:
 		// Write the start of a tmux escape sequence.
@@ -291,7 +291,7 @@ func (s *Sequence) seqStart() string {
 	}
 }
 
-func (s *Sequence) seqEnd() string {
+func (s Sequence) seqEnd() string {
 	switch s.mode {
 	case TmuxMode:
 		// Terminate the tmux escape sequence.
