@@ -281,7 +281,7 @@ func Clear() Sequence {
 func (s Sequence) seqStart() string {
 	switch s.mode {
 	case TmuxMode:
-		// Write the start of a tmux escape sequence.
+		// Write the start of a tmux DCS escape sequence.
 		return "\x1bPtmux;\x1b"
 	case ScreenMode:
 		// Write the start of a DCS sequence.
@@ -293,12 +293,9 @@ func (s Sequence) seqStart() string {
 
 func (s Sequence) seqEnd() string {
 	switch s.mode {
-	case TmuxMode:
-		// Terminate the tmux escape sequence.
+	case TmuxMode, ScreenMode:
+		// Terminate the DCS escape sequence.
 		return "\x1b\\"
-	case ScreenMode:
-		// Write the end of a DCS sequence.
-		return "\x1b\x5c"
 	default:
 		return ""
 	}
